@@ -1,15 +1,55 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import ApiService from '../../services/api';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', { email, password, isLogin });
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      if (isLogin) {
+        // Login
+        const response = await ApiService.login({ email, password });
+        setMessage('Login successful!');
+        console.log('Login response:', response);
+        // Store token in localStorage
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+        }
+        // Navigate to home or dashboard
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      } else {
+        // Register
+        const response = await ApiService.register({ name, email, password });
+        setMessage('Registration successful! Please check your email for verification.');
+        console.log('Registration response:', response);
+        // Navigate to verification page
+        setTimeout(() => {
+          navigate('/send-verify-otp');
+        }, 2000);
+      }
+    } catch (error) {
+      setError(error.message || 'Something went wrong');
+      console.error('Auth error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleAuth = () => {
@@ -34,7 +74,38 @@ export default function AuthPage() {
           {isLogin ? 'Login' : 'Sign Up'}
         </h1>
 
+        {/* Message Display */}
+        {message && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+            {message}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name Field - Only for Sign Up */}
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                FULL NAME
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
+                required
+              />
+            </div>
+          )}
+
           {/* Email Field */}
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-2">
@@ -44,7 +115,7 @@ export default function AuthPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Prithvirajsah584@gmail.com"
+              placeholder="Enter your email address"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all"
               required
             />
@@ -60,7 +131,7 @@ export default function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••"
+                placeholder="Enter your password"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all pr-12"
                 required
               />
@@ -89,9 +160,21 @@ export default function AuthPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors whitespace-nowrap"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-purple-600 hover:bg-purple-700'
+            } text-white`}
           >
-            {isLogin ? 'Login Now' : 'Sign Up Now'}
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                {isLogin ? 'Logging in...' : 'Signing up...'}
+              </div>
+            ) : (
+              isLogin ? 'Login Now' : 'Sign Up Now'
+            )}
           </button>
 
           {/* Toggle Login/Signup */}

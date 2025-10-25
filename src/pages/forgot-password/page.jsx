@@ -1,14 +1,37 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import ApiService from '../../services/api';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Reset password for:', email);
-    setIsSubmitted(true);
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await ApiService.forgotPassword(email);
+      console.log('Password reset request:', response);
+      setMessage('Password reset code sent to your email!');
+      setIsSubmitted(true);
+      
+      // Navigate to reset password page after 2 seconds
+      setTimeout(() => {
+        navigate('/reset-password', { state: { email } });
+      }, 2000);
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      setError(error.message || 'Failed to send reset code');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (isSubmitted) {
@@ -23,33 +46,20 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i className="ri-check-line text-2xl text-green-600"></i>
-          </div>
-          <br />
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            Check Your Email
-          </h1>
-          <br />
-          <p className="text-gray-600 mb-6">
-            We've sent a password reset link to <strong>{email}</strong>
-          </p>
-          <br />
-          <div className="space-y-4">
-            <button
-              onClick={() => setIsSubmitted(false)}
-              className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors whitespace-nowrap"
-            >
-              Try Again
-            </button>
-            <br />
-            <Link
-              to="/auth"
-              className="block w-full text-center py-3 text-purple-600 hover:text-purple-700 font-medium transition-colors"
-            >
-              Back to Login
-            </Link>
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="ri-mail-check-line text-2xl text-green-600"></i>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+              Reset Code Sent!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {message}
+            </p>
+            <p className="text-sm text-gray-500">
+              Redirecting to reset password page...
+            </p>
           </div>
         </div>
       </div>
@@ -72,15 +82,27 @@ export default function ForgotPasswordPage() {
           <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="ri-lock-line text-2xl text-purple-600"></i>
           </div>
-          <br />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             Forgot Password?
           </h1>
-          <br />
-          <p className="text-gray-600 text-sm">
-            No worries! Enter your email address and we'll send you a reset link.
+          <p className="text-gray-600">
+            Enter your email address to receive a reset code
           </p>
         </div>
+
+        {/* Message Display */}
+        {message && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+            {message}
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -99,24 +121,24 @@ export default function ForgotPasswordPage() {
 
           <button
             type="submit"
-            className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors whitespace-nowrap"
+            disabled={loading}
+            className={`w-full py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-purple-600 hover:bg-purple-700'
+            } text-white`}
           >
-            Send Reset Link
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Sending Reset Code...
+              </div>
+            ) : (
+              'Send Reset Code'
+            )}
           </button>
-
-          <div className="text-center">
-            <Link
-              to="/auth"
-              className="text-sm text-gray-600 hover:text-purple-600 transition-colors flex items-center justify-center gap-2"
-            >
-              <i className="ri-arrow-left-line"></i>
-              Back to Login
-            </Link>
-          </div>
         </form>
       </div>
     </div>
   );
 }
-
-
