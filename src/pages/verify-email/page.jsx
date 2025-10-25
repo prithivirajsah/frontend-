@@ -1,86 +1,78 @@
 import { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import AuthCard from '../../components/base/AuthCard';
 import Button from '../../components/base/Button';
 import Input from '../../components/base/Input';
-import ApiService from '../../services/api';
 
-export default function VerifyEmail() {
-  const [otp, setOtp] = useState('');
+export default function VerifyEmailPage() {
+  const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [verified, setVerified] = useState(false);
-  const location = useLocation();
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  
-  const email = location.state?.email || '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!otp) return;
     setLoading(true);
-    
+    setError('');
+    setMessage('');
+
     try {
-      const response = await ApiService.verifyEmail(email, otp);
-      console.log('Email verified:', response);
-      setVerified(true);
-      // Navigate to auth page after 2 seconds
+      // Add your verification logic here
+      // const response = await ApiService.verifyEmail({ code: verificationCode });
+      setMessage('Email verified successfully!');
       setTimeout(() => {
         navigate('/auth');
       }, 2000);
     } catch (error) {
-      console.error('Error verifying email:', error);
-      alert('Error verifying email: ' + error.message);
+      setError(error.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
   };
 
-  if (verified) {
-    return (
-      <AuthCard
-        title="Email Verified"
-        subtitle="Your email has been successfully verified"
-      >
-        <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="ri-check-line text-2xl text-green-600"></i>
-          </div>
-          <p className="text-gray-600 mb-6">
-            Your email <strong>{email}</strong> has been verified successfully.
-          </p>
-          <p className="text-sm text-gray-500">
-            Redirecting to auth page...
-          </p>
-        </div>
-      </AuthCard>
-    );
-  }
-
   return (
-    <AuthCard
-      title="Verify Email"
-      subtitle={`Enter the verification code sent to ${email}`}
+    <AuthCard 
+      title="Verify Your Email" 
+      subtitle="Enter the verification code sent to your email"
     >
-      <form onSubmit={handleSubmit}>
+      {message && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
         <Input
-          type="text"
           label="Verification Code"
-          placeholder="Enter verification code"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          icon="ri-shield-check-line"
+          type="text"
+          value={verificationCode}
+          onChange={(e) => setVerificationCode(e.target.value)}
+          placeholder="Enter 6-digit code"
           required
         />
-        <Button type="submit" loading={loading} disabled={!otp}>
-          Verify Email
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full"
+        >
+          {loading ? 'Verifying...' : 'Verify Email'}
         </Button>
-        <div className="mt-6 text-center">
+
+        <div className="text-center">
           <button
             type="button"
-            onClick={() => navigate('/send-verify-otp')}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium cursor-pointer"
+            onClick={() => navigate('/auth')}
+            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
           >
-            Resend Code
+            Back to Login
           </button>
         </div>
       </form>

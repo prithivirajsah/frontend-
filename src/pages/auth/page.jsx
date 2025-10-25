@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
+import { GoogleLogin } from "@react-oauth/google"
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -41,7 +42,7 @@ export default function AuthPage() {
         console.log('Registration response:', response);
         // Navigate to verification page
         setTimeout(() => {
-          navigate('/send-verify-otp');
+          navigate('/verify-email');
         }, 2000);
       }
     } catch (error) {
@@ -52,8 +53,15 @@ export default function AuthPage() {
     }
   };
 
-  const handleGoogleAuth = () => {
-    console.log('Google auth clicked');
+  const handleGoogleSuccess = (credentialResponse) => {
+    console.log(credentialResponse);
+    // Here you can send the credential to your backend
+    // Example: ApiService.googleLogin(credentialResponse.credential)
+  };
+
+  const handleGoogleError = () => {
+    console.log("Login Failed");
+    setError("Google login failed. Please try again.");
   };
 
   return (
@@ -161,11 +169,10 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              loading
+            className={`w-full py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${loading
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-purple-600 hover:bg-purple-700'
-            } text-white`}
+              } text-white`}
           >
             {loading ? (
               <div className="flex items-center justify-center">
@@ -177,6 +184,30 @@ export default function AuthPage() {
             )}
           </button>
 
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">OR USE</span>
+            </div>
+          </div>
+
+          {/* Google Sign In */}
+          <div className="w-full flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="outline"
+              size="large"
+              text="continue_with"
+              shape="rectangular"
+              locale="en"
+            />
+          </div>
+          
           {/* Toggle Login/Signup */}
           <div className="text-center text-sm text-gray-600">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
@@ -189,27 +220,6 @@ export default function AuthPage() {
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">OR USE</span>
-            </div>
-          </div>
-
-          {/* Google Sign In */}
-          <button
-            type="button"
-            onClick={handleGoogleAuth}
-            className="w-full flex items-center justify-center gap-3 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
-          >
-            <div className="w-5 h-5 flex items-center justify-center">
-              <i className="ri-google-fill text-lg text-red-500"></i>
-            </div>
-            <span className="text-gray-700 font-medium">Continue with Google</span>
-          </button>
         </form>
       </div>
 
@@ -222,5 +232,3 @@ export default function AuthPage() {
     </div>
   );
 }
-
-

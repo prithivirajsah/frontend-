@@ -1,13 +1,13 @@
-export default function Input({ 
-  type = "text", 
-  label, 
-  placeholder, 
-  value, 
-  onChange, 
-  icon, 
+export default function Input({
+  type = "text",
+  label,
+  placeholder,
+  value,
+  onChange,
+  icon,
   required = false,
   className = "",
-  ...props 
+  ...props
 }) {
   return (
     <div className="mb-4">
