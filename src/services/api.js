@@ -61,14 +61,6 @@ class ApiService {
     });
   }
 
-  // Verify email
-  async verifyEmail(email, code) {
-    return this.request('/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ email, code }),
-    });
-  }
-
   // Forgot password
   async forgotPassword(email) {
     return this.request('/forgot-password', {

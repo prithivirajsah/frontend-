@@ -4,8 +4,18 @@ export default function Button({
   loading = false, 
   disabled = false, 
   className = "",
+  variant = "default",
   ...props 
 }) {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case "outline":
+        return "bg-transparent border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white";
+      default:
+        return "bg-purple-600 text-white hover:bg-purple-700";
+    }
+  };
+
   return (
     <button
       type={type}
@@ -14,7 +24,7 @@ export default function Button({
         w-full px-4 py-3 rounded-lg font-medium transition-colors
         ${disabled || loading 
           ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-          : 'bg-purple-600 text-white hover:bg-purple-700'
+          : getVariantClasses()
         }
         ${className}
       `}

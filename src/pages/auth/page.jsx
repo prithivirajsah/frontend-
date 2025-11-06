@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
 import { GoogleLogin } from "@react-oauth/google"
+import { toast, ToastContainer } from 'react-toastify';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,21 +11,17 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setMessage('');
 
     try {
       if (isLogin) {
         // Login
         const response = await ApiService.login({ email, password });
-        setMessage('Login successful!');
+        toast('Login successfully')
         console.log('Login response:', response);
         // Store token in localStorage
         if (response.token) {
@@ -38,15 +35,17 @@ export default function AuthPage() {
       } else {
         // Register
         const response = await ApiService.register({ name, email, password });
-        setMessage('Registration successful! Please check your email for verification.');
+        toast('Registration successful! You can now log in.');
         console.log('Registration response:', response);
-        // Navigate to verification page
+        // Switch to login mode after successful registration
         setTimeout(() => {
-          navigate('/verify-email');
+          setIsLogin(true);
+          setName('');
+          setPassword('');
         }, 2000);
       }
     } catch (error) {
-      setError(error.message || 'Something went wrong');
+      toast(error.message || 'Something went wrong')
       console.error('Auth error:', error);
     } finally {
       setLoading(false);
@@ -57,15 +56,17 @@ export default function AuthPage() {
     console.log(credentialResponse);
     // Here you can send the credential to your backend
     // Example: ApiService.googleLogin(credentialResponse.credential)
+    navigate('/');
   };
 
   const handleGoogleError = () => {
     console.log("Login Failed");
-    setError("Google login failed. Please try again.");
+    toast("Google login failed. Please try again.");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-500 to-blue-500 flex items-center justify-center p-4">
+      <ToastContainer/>
       {/* Sign Up Button - Top Right */}
       <div className="absolute top-8 right-8">
         <button
@@ -79,22 +80,8 @@ export default function AuthPage() {
       {/* Login Form */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-2xl font-bold text-center text-gray-800 mb-8">
-          {isLogin ? 'Login' : 'Sign Up'}
+          {isLogin ? 'Login' : 'Create your account'}
         </h1>
-
-        {/* Message Display */}
-        {message && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
-            {message}
-          </div>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name Field - Only for Sign Up */}
